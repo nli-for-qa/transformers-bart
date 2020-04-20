@@ -29,8 +29,8 @@ if os.environ.get("LIGHTNING_DEBUG"):
 else:
     LEVEL = logging.INFO
 
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
-                    level=LEVEL)
+logging.basicConfig(
+    format='%(asctime)s - %(levelname)s - %(name)s - %(message)s', level=LEVEL)
 
 ALL_MODELS = tuple(ALL_PRETRAINED_MODEL_ARCHIVE_MAP)
 MODEL_CLASSES = tuple(m.model_type for m in MODEL_MAPPING)
@@ -325,6 +325,7 @@ def add_generic_args(parser, root_dir):
         default=1,
         help="Number of updates steps to accumulate before performing a backward/update pass.",
     )
+    parser.add_argument('--early_stop_patience', default=0, type=int)
 
     parser.add_argument(
         "--server_ip", type=str, default="", help="For distant debugging.")
@@ -334,7 +335,7 @@ def add_generic_args(parser, root_dir):
         "--seed", type=int, default=42, help="random seed for initialization")
 
 
-def generic_train(model, args):
+def setup_trainer(args):
     # init model
     set_seed(args)
 
@@ -356,17 +357,17 @@ def generic_train(model, args):
                 args.output_dir))
 
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
-        filepath=os.path.join(args.output_dir,'{epoch}'),
+        filepath=os.path.join(args.output_dir, '{epoch}'),
         monitor="val_loss",
-        mode="min", verbose=True,
-        save_top_k=2)
+        mode="min",
+        verbose=True,
+        save_top_k=1)
     early_stop_callback = EarlyStopping(
-    monitor='val_loss',
-    min_delta=0.00,
-    patience=0,
-    verbose=True,
-    mode='min'
-    )
+        monitor='val_loss',
+        min_delta=0.00,
+        patience=args.early_stop_patience,
+        verbose=True,
+        mode='min')
     # wandb logger
     wandb_logger = WandbLogger(project="bart-qa-to-nli")
     train_params = dict(
@@ -396,8 +397,5 @@ def generic_train(model, args):
         train_params["distributed_backend"] = "ddp"
 
     trainer = pl.Trainer(**train_params)
-
-    if args.do_train:
-        trainer.fit(model)
 
     return trainer

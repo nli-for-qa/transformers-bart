@@ -42,13 +42,13 @@ class BartSystem(BaseTransformer):
         y_ids = y[:, :-1].contiguous()
         lm_labels = y[:, 1:].clone()
         # Uncomment following line to ignore pad tokens in target while calculating loss
-        #lm_labels[y[:, 1:] == self.tokenizer.pad_token_id] = -100
-        target_mask = batch["target_mask"][:, :-1].contiguous(
-        )  # drop one in mask as well
+        lm_labels[y[:, 1:] == self.tokenizer.pad_token_id] = -100
+        #target_mask = batch["target_mask"][:, :-1].contiguous(
+        #)  # drop one in mask as well
         outputs = self(
             input_ids=batch["source_ids"],
             attention_mask=batch["source_mask"],
-            decoder_attention_mask=target_mask,
+        #    decoder_attention_mask=target_mask,
             decoder_input_ids=y_ids,
             lm_labels=lm_labels,
         )

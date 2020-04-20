@@ -51,8 +51,8 @@ class SummarizationDataset(Dataset):
                                                         pad_to_max_length=True,
                                                         return_tensors="pt")
                 # Let the model attend to pad tokens in the target.
-                tokenized['attention_mask'][tokenized['attention_mask']
-                                            == 0] = 1
+                #tokenized['attention_mask'][tokenized['attention_mask']
+                #                            == 0] = 1
                 self.target.append(tokenized)
 
     def __len__(self):
